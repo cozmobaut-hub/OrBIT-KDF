@@ -254,9 +254,10 @@ def derive_fractal_key(username: str, password: str, k: float = 1.0) -> bytes:
     # 2) Julia parameter from final Chirikov point
     cx = np.tanh(x_final) * 0.8
     cy = np.tanh(p_final) * 0.8
+    global c
     c = complex(cx, cy)
 
-    # 3) Julia trajectory for password
+    global zs_p     # 3) Julia trajectory for password
     zs_p = julia_trajectory(password, c=c, n_iter=1500)
 
     # 4) Build a deterministic byte string out of the orbit data
@@ -281,8 +282,6 @@ if __name__ == "__main__":
     username = input("Username: ")
     password = input("Password: ")
     key = derive_fractal_key(username, password)
-    print("Generated key (hex):", key.hex())
-
     # compute orbit for this username with the same params used in the KDF/viz
     xs, ps = chirikov_trajectory_for_stability(
         username, k=1.0, n_iter=2000, scale=2.0
@@ -292,11 +291,14 @@ if __name__ == "__main__":
     stable = is_stable_orbit(xs, ps)
 
     # "orbit designation" = SHA-256 of username (or username:password) hex, your call
-    orbit_id = hashlib.sha256(f"{username}:{password}".encode("utf-8")).hexdigest()[:16]
+    orbit_id = hashlib.sha256(f"ID:{username}".encode("utf-8")).hexdigest()
 
     status = "STABLE" if stable else "UNSTABLE"
-    print(f"Orbit {orbit_id}: {status} for credentials (username='{username}')")
-
+    print(f"Orbit ({orbit_id}): {status} for credentials (username='{username}')")
+    print(f"Trajectory intersection in complex space: {c} ")
+    print(f"Chirikov/Julia space trajectory intersection: x={xs[-1]:.4f}, p={ps[-1]:.4f}")
+    print(f"Final Julia Trajectory: \n {str(zs_p)[1:(len(str(zs_p))-1)]}")
+    print("Generated key (hex):", key.hex())
     visualize_both_chirikov(username, password)
 
 
