@@ -235,7 +235,7 @@ def monte_carlo_stability(num_samples=1000,
     total = stable + unstable
     pct_stable = 100.0 * stable / total
     pct_unstable = 100.0 * unstable / total
-    print(f"\n=== Monte Carlo stability over {total} random creds ===")
+    print(f"\n=== Monte Carlo stability over {total} random credential orbits ===")
     print(f"Stable:   {stable} ({pct_stable:.2f}%)")
     print(f"Unstable: {unstable} ({pct_unstable:.2f}%)\n")
 
@@ -244,7 +244,6 @@ import hashlib
 def derive_fractal_key(username: str, password: str, k: float = 1.0) -> bytes:
     """
     Full KDF: username/password -> SHA-256 -> Chirikov+Julia -> SHA-512 key.
-    This must match your production pipeline.
     """
     # 1) Chirikov for username (same settings as your viz small-box orbit)
     xs_small, ps_small = chirikov_trajectory(
@@ -281,14 +280,32 @@ def derive_fractal_key(username: str, password: str, k: float = 1.0) -> bytes:
 if __name__ == "__main__":
     username = input("Username: ")
     password = input("Password: ")
+    key = derive_fractal_key(username, password)
+    print("Generated key (hex):", key.hex())
+
+    # compute orbit for this username with the same params used in the KDF/viz
+    xs, ps = chirikov_trajectory_for_stability(
+        username, k=1.0, n_iter=2000, scale=2.0
+    )
+
+    # check stability
+    stable = is_stable_orbit(xs, ps)
+
+    # "orbit designation" = SHA-256 of username (or username:password) hex, your call
+    orbit_id = hashlib.sha256(f"{username}:{password}".encode("utf-8")).hexdigest()[:16]
+
+    status = "STABLE" if stable else "UNSTABLE"
+    print(f"Orbit {orbit_id}: {status} for credentials (username='{username}')")
+
     visualize_both_chirikov(username, password)
 
+
     # run automatic 1000-sample stability test
-    monte_carlo_stability(
-        num_samples=int(input("how many random samples for stability test? ")),
-        uname_len=24,
-        pwd_len=24,
-        k=1.0,
-        scale=2.0,
-        n_iter=2000
-    )
+    #monte_carlo_stability(
+    #    num_samples=int(input("How many random samples for stability test? ")),
+    #    uname_len=24,
+    #    pwd_len=24,
+    #    k=1.0,
+    #    scale=2.0,
+    #    n_iter=2000
+    #)
