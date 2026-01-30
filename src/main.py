@@ -5,13 +5,14 @@ from mpl_toolkits.mplot3d import Axes3D  # noqa: F401
 import string
 import random
 
+# ---------- Global parameter ----------
+
+K = 1.0  # <<< set your K here once
 
 # ---------- Hash helpers ----------
 
-
 def sha256_bytes(s: str) -> bytes:
     return hashlib.sha256(s.encode("utf-8")).digest()
-
 
 def seed_to_float_pair(seed: bytes, scale: float) -> tuple[float, float]:
     a = int.from_bytes(seed[0:8], "big")
@@ -20,15 +21,12 @@ def seed_to_float_pair(seed: bytes, scale: float) -> tuple[float, float]:
     p = (b / 2**64) * (2 * scale) - scale
     return x, p
 
-
 # ---------- Chirikov ----------
-
 
 def chirikov_step(x, p, k):
     p = p + k * np.sin(x)
     x = x + p
     return x, p
-
 
 def chirikov_trajectory(username: str, k: float,
                         n_iter: int, scale: float):
@@ -39,7 +37,6 @@ def chirikov_trajectory(username: str, k: float,
         xs.append(x)
         ps.append(p)
     return np.array(xs), np.array(ps)
-
 
 def chirikov_background(k: float,
                         n_seeds: int,
@@ -57,9 +54,7 @@ def chirikov_background(k: float,
             ps_all.append(p)
     return np.array(xs_all), np.array(ps_all)
 
-
 # ---------- Julia set + orbit ----------
-
 
 def julia_set_grid(c: complex,
                    x_min=-1.5, x_max=1.5,
@@ -83,7 +78,6 @@ def julia_set_grid(c: complex,
     img[mask] = max_iter
     return xs, ys, img
 
-
 def julia_trajectory(password: str, c: complex,
                      n_iter: int = 1500):
     seed = sha256_bytes(password)
@@ -99,11 +93,9 @@ def julia_trajectory(password: str, c: complex,
             break
     return np.array(zs)
 
-
 # ---------- Master visualization ----------
 
-
-def visualize_both_chirikov(username: str, password: str, k: float = 1.0):
+def visualize_both_chirikov(username: str, password: str, k: float = K):
     # Chirikov orbits
     xs_small, ps_small = chirikov_trajectory(
         username, k=k, n_iter=2000, scale=2.0  # small box -> stable loop view
@@ -194,9 +186,7 @@ def visualize_both_chirikov(username: str, password: str, k: float = 1.0):
     plt.tight_layout()
     plt.show()
 
-
 # ---------- Stability Monte Carlo ----------
-
 
 def chirikov_trajectory_for_stability(username: str,
                                       k: float,
@@ -209,7 +199,6 @@ def chirikov_trajectory_for_stability(username: str,
         xs.append(x)
         ps.append(p)
     return np.array(xs), np.array(ps)
-
 
 def is_stable_orbit(xs, ps, radius=2000000.0, lyap_thresh=0.0):
     """Heuristic: stable if bounded and average local expansion <= threshold."""
@@ -231,11 +220,10 @@ def is_stable_orbit(xs, ps, radius=2000000.0, lyap_thresh=0.0):
     # "Stable" if no net exponential growth
     return lyap_est < lyap_thresh
 
-
 def monte_carlo_stability(num_samples=1000,
                           uname_len=8,
                           pwd_len=8,
-                          k=1.0,
+                          k: float = K,
                           scale=2.0,
                           n_iter=1500,
                           radius=20.0,
@@ -262,11 +250,9 @@ def monte_carlo_stability(num_samples=1000,
     print(f"Stable:   {stable} ({pct_stable:.2f}%)")
     print(f"Unstable: {unstable} ({pct_unstable:.2f}%)\n")
 
-
 # ---------- KDF ----------
 
-
-def derive_fractal_key(username: str, password: str, k: float = 1.0) -> bytes:
+def derive_fractal_key(username: str, password: str, k: float = K) -> bytes:
     """Full KDF: username/password -> SHA-256 -> Chirikov+Julia -> SHA-512 key."""
     xs_small, ps_small = chirikov_trajectory(
         username, k=k, n_iter=2000, scale=2.0
@@ -294,14 +280,16 @@ def derive_fractal_key(username: str, password: str, k: float = 1.0) -> bytes:
 
     return hashlib.sha512(bytes(buf)).digest()
 
+# ---------- Main ----------
 
 if __name__ == "__main__":
+    print(f"Using K = {K}")
     username = input("Username: ")
     password = input("Password: ")
-    key = derive_fractal_key(username, password)
+    key = derive_fractal_key(username, password, k=K)
 
     xs, ps = chirikov_trajectory_for_stability(
-        username, k=1.0, n_iter=2000, scale=2.0
+        username, k=K, n_iter=2000, scale=2.0
     )
 
     stable = is_stable_orbit(xs, ps, radius=20.0, lyap_thresh=0.0)
@@ -315,14 +303,13 @@ if __name__ == "__main__":
     print(f"Final Julia Trajectory: \n {str(zs_p)[1:(len(str(zs_p))-1)]}")
     print("Generated key (hex):", key.hex())
 
-    visualize_both_chirikov(username, password)
+    visualize_both_chirikov(username, password, k=K)
 
-    # Example Monte Carlo call to re-check the 33%:
     monte_carlo_stability(
         num_samples=90000,
         uname_len=24,
         pwd_len=24,
-        k=1.0,
+        k=K,
         scale=2.0,
         n_iter=2000,
         radius=2000000.0,

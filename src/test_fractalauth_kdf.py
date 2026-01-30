@@ -33,7 +33,7 @@ def test_collision_rate(num_samples=10000):
     for i in range(num_samples):
         u = random_cred()
         p = random_cred()
-        key = visualize.derive_fractal_key(u, p)
+        key = main.derive_fractal_key(u, p)
         if key in seen:
             collisions += 1
         else:
@@ -56,7 +56,7 @@ def test_avalanche(num_pairs=2000):
     for i in range(num_pairs):
         u = random_cred()
         p = random_cred()
-        key1 = visualize.derive_fractal_key(u, p)
+        key1 = main.derive_fractal_key(u, p)
 
         # flip exactly one character in username
         idx = random.randrange(len(u))
@@ -64,7 +64,7 @@ def test_avalanche(num_pairs=2000):
         new_char = random.choice([c for c in chars if c != u[idx]])
         u2 = u[:idx] + new_char + u[idx+1:]
 
-        key2 = visualize.derive_fractal_key(u2, p)
+        key2 = main.derive_fractal_key(u2, p)
         dist = hamming_distance(key1, key2)
         total_dist += dist
         total_bits += len(key1) * 8
@@ -82,13 +82,13 @@ def test_bit_distribution(num_samples=10000):
     """
     Check per-bit 0/1 balance across many outputs.
     """
-    key_len = len(visualize.derive_fractal_key("u0", "p0"))
+    key_len = len(main.derive_fractal_key("u0", "p0"))
     bit_counts = np.zeros(key_len * 8, dtype=int)
 
     for i in range(num_samples):
         u = random_cred()
         p = random_cred()
-        key = visualize.derive_fractal_key(u, p)
+        key = main.derive_fractal_key(u, p)
         bits = ''.join(f"{byte:08b}" for byte in key)
         for j, b in enumerate(bits):
             if b == '1':
