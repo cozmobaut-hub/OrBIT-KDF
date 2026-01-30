@@ -34,7 +34,7 @@ def compute_fractal_key(username: str, password: str) -> bytes:
 
 # ---------- New pipeline: import from visualize ----------
 
-from visualize import derive_fractal_key  # your SHAh KDF
+from main import derive_fractal_key  # your SHAh KDF
 
 
 # ---------- Shared test helpers ----------

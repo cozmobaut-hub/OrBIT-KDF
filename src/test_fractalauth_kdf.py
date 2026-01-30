@@ -6,7 +6,7 @@ from collections import Counter
 
 import numpy as np
 
-import visualize  # your script with derive_fractal_key defined
+import main  # your script with derive_fractal_key defined
 
 
 def random_cred(length=8):

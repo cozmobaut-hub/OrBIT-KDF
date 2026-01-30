@@ -3,7 +3,7 @@ import time
 import math
 import random
 
-from visualize import derive_fractal_key  # your SHAh KDF
+from main import derive_fractal_key  # your SHAh KDF
 
 
 # ---------- Helpers ----------

@@ -1,6 +1,6 @@
 import sys
 from getpass import getpass
-from visualize import derive_fractal_key  # this is the function we added earlier
+from main import derive_fractal_key  # this is the function we added earlier
 
 
 def main():

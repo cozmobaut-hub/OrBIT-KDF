@@ -2,7 +2,7 @@
 import tkinter as tk
 from tkinter import messagebox
 
-from visualize import derive_fractal_key  # import the new KDF
+from main import derive_fractal_key  # import the new KDF
 
 
 def on_generate():
