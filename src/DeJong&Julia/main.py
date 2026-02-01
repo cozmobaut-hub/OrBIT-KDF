@@ -247,6 +247,60 @@ def monte_carlo_stability(num_samples=1000,
     print(f"Stable:   {stable} ({pct_stable:.2f}%)")
     print(f"Unstable: {unstable} ({pct_unstable:.2f}%)\n")
 
+def find_good_demo_path_dejong(
+    uname_tries=50000,
+    pwd_tries=50000,
+    uname_len=8,
+    pwd_len=8,
+    n_iter_dejong=2000,
+    julia_len_thresh=1400,
+    scale=2.0,
+):
+    import string, random
+    chars = string.ascii_letters + string.digits
+
+    # 1) find a stable username (De Jong orbit)
+    for _ in range(uname_tries):
+        uname = ''.join(random.choice(chars) for _ in range(uname_len))
+        xs, ys = dejong_trajectory_for_stability(
+            uname, n_iter=n_iter_dejong, scale=scale
+        )
+        if is_stable_orbit(xs, ys, radius=20.0, lyap_thresh=0.0):
+            print("Found STABLE username:", uname)
+
+            # compute c for this username (same as in derive_fractal_key_dejong)
+            x_final, y_final = xs[-1], ys[-1]
+            cx = np.tanh(x_final) * 0.8
+            cy = np.tanh(y_final) * 0.8
+            c = complex(cx, cy)
+
+            # 2) search passwords with long Julia paths
+            best_pwd = None
+            best_len = -1
+            for _ in range(pwd_tries):
+                pwd = ''.join(random.choice(chars) for _ in range(pwd_len))
+                zs = julia_trajectory(pwd, c=c, n_iter=1500)
+                L = len(zs)
+                if L > best_len:
+                    best_len = L
+                    best_pwd = pwd
+                if L >= julia_len_thresh:
+                    print(
+                        f"Found good DEMO pair: "
+                        f"username='{uname}', password='{pwd}', "
+                        f"Julia length={L}"
+                    )
+                    return uname, pwd, L
+
+            print(
+                f"No password reached threshold; best for username '{uname}' "
+                f"is password='{best_pwd}' with length={best_len}"
+            )
+            return uname, best_pwd, best_len
+
+    print("No stable username found in", uname_tries, "tries")
+    return None, None, 0
+
 
 # ---------- KDF (De Jong + Julia) ----------
 
@@ -305,10 +359,10 @@ if __name__ == "__main__":
     visualize_both_dejong(username, password)
 
     monte_carlo_stability(
-        num_samples=90000,
+        num_samples=9000,
         uname_len=24,
         scale=2.0,
         n_iter=2000,
         radius=2000000.0,
-        lyap_thresh=0.0,
+        lyap_thresh=0.0,#
     )
