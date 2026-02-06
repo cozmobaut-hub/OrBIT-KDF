@@ -8,7 +8,7 @@ import random
 
 # ---------- De Jong parameters ----------
 # Classic chaotic set; tweak these if you want different shapes.
-a_dj, b_dj, c_dj, d_dj = 2.01, -2.53, 1.61, -0.33
+a_dj, b_dj, c_dj, d_dj = .026, -2.54, .146, -0.407
 
 
 # ---------- Hash helpers ----------
