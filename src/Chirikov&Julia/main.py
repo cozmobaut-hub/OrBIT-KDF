@@ -255,7 +255,7 @@ def monte_carlo_stability(num_samples=1000,
 def derive_fractal_key(username: str, password: str, k: float = K) -> bytes:
     """Full KDF: username/password -> SHA-256 -> Chirikov+Julia -> SHA-512 key."""
     xs_small, ps_small = chirikov_trajectory(
-        username, k=k, n_iter=2000, scale=2.0
+        username, k=k, n_iter=130000, scale=2.0
     )
     x_final, p_final = xs_small[-1], ps_small[-1]
 
